@@ -1,0 +1,21 @@
+rootProject.name = 'nan'
+
+def scanAllSubProject(File file, List<String> parents = []) {
+    if (!new File(file, "build.gradle").exists()) {
+        return
+    }
+    parents.add(file.name)
+    if (parents.size() > 0) {
+        def name = parents.subList(1, parents.size()).join(":")
+        include name
+        if (name != "") {
+            print 'scan: '
+            println name
+        }
+    }
+    file.listFiles().each { f -> if (f.isDirectory()) scanAllSubProject(f, parents) }
+    parents.removeLast()
+}
+
+println 'scan sub projects'
+scanAllSubProject(new File('.'))
