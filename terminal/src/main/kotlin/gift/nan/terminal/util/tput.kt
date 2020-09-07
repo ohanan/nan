@@ -3,7 +3,17 @@ package gift.nan.terminal.util
 import java.io.Flushable
 import java.util.*
 
-class Curses {
+interface Tput {
+    fun tput(cap: String, vararg params: Any): String
+    fun tput(out: Appendable, cap: String, vararg params: Any)
+
+    companion object : Tput by Tput.instance {
+        private val instance = TputImpl()
+        fun new(): Tput = TputImpl()
+    }
+}
+
+private class TputImpl : Tput {
     private val stack = Stack<Any>()
     private val sv = Array<Any>(26) {}
     private val dv = Array<Any>(26) {}
@@ -31,10 +41,6 @@ class Curses {
     }
 
     companion object {
-        fun tputs(cap: String, vararg params: Any): String = instance.tputs(cap, *params)
-        fun tputs(out: Appendable, cap: String, vararg params: Any) = instance.tputs(out, cap, *params)
-        private val instance = Curses()
-
         private val binaryOperationHandler = mapOf<Char, Int.(Int) -> Any>(
             '+' to Int::plus,
             '-' to Int::minus,
@@ -61,8 +67,8 @@ class Curses {
         )
     }
 
-    fun tputs(cap: String, vararg params: Any): String = buildString { tputs(this, cap, *params) }
-    fun tputs(out: Appendable, cap: String, vararg params: Any) {
+    override fun tput(cap: String, vararg params: Any): String = buildString { tput(this, cap, *params) }
+    override fun tput(out: Appendable, cap: String, vararg params: Any) {
         val len = cap.length
         var increase = 0
         var index = 0
@@ -133,6 +139,8 @@ class Curses {
                                     IfThenStatus.Then -> exec = stack.pop().toInt() != 0
                                     IfThenStatus.Else -> exec = !exec
                                     IfThenStatus.None -> exec = true
+                                    IfThenStatus.If -> {
+                                    }
                                 }
                             } else if (exec) {
                                 val v1 = stack.pop().toInt()
@@ -173,8 +181,4 @@ class Curses {
         is Boolean -> if (this) 1 else 0
         else -> toString().toInt(10)
     }
-}
-
-interface C {
-
 }
